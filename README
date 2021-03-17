@@ -1,0 +1,99 @@
+DeepBSP v0.1 (by Bao Jingxiao 2021.3)
+
+Introduction--------------------------------------------------------------------
+DeepBSP is a machine-learning-based 3D-CNN model that can directly predict the
+RMSD of ligand docking poses to its native binding model. The element-based
+voxel grids are used to descript the complex structures. DeepBSP is developed
+based on ligand poses docked with Autodock Vina, but has RMSD predict ability on
+poses docked with other docking software.
+--------------------------------------------------------------------------------
+
+Make and Install----------------------------------------------------------------
+0.Several programs are required before you can use DeepBSP. The input receptor
+  and ligand files should be convert to PDB format, and should be prepared with
+  the AutoDockTools provided by the MGLTools packages (version 1.5.7). The voxel
+  descriptor calculator is written in Fortran and need to be compiled through a
+  compiler (GNU fortran compiler version 6.4.0). The calculated descriptors are
+  stored in the compression enabled NetCDF format, so the corresponding library
+  files are required to build the descriptor calculator. The 3D-CNN model was
+  built with Pytorch (version 1.4.0, installed var conda version 4.8.3) and
+  require the netcdf4 python package (version 1.5.3). Programs and packages with
+  versions other than those in the brackets may work as well, but have not been
+  tested.
+
+1.Packages required to build the netcdf library files are provided in the
+  "packages" folder, the installation processes are listed in the "RunMake.sh"
+  script. Run this script will build the required library files automatically
+  within several minutes. If you meet any problem during compiling, please refer
+  to the manual of the corresponding program.
+
+2.The source code of the voxel descriptor calculator is in the "src" folder.
+  You can run "bash Make.sh" to build the program if you have installed the
+  required library files successfully in the above step. If you use compiler
+  other than GNU, or if you already have the suitable netcdf libs installed
+  somewhere, you can edit the Make.sh file by yourself. The built program, named
+  Cal_ElementVoxel_PDB, will be placed in the "bin" folder under the same
+  directory as the "src" folder.
+
+3.The python scripts for the model calculation are placed in the "bin" folder.
+  The "DeepBSP_CPU.py" will run all calculations on CPU while "DeepBSP_GPU.py"
+  will use GPU to accelerate the calculation. Since the amount of calculation of
+  3D-CNN model is large, we recommend you to use GPU acceleration when possible.
+  The element VDW radii parameters required by the voxel descriptor calculator
+  is recorded in the "Cal_ElementVoxel_PDB_ElementVDWRadii.dat" file in the
+  "dat" folder, the network model parameter files are also placed in this folder.
+--------------------------------------------------------------------------------
+
+Brief Example-------------------------------------------------------------------
+0.There is a brief example in the "example" folder, we recommend you to backup
+  this folder before testing. This example contains the native binding pose of
+  ligand TI1 (1qf1_ligand.mol2) to its receptor (1qf1_protein.pdb) based on the
+  PDB ID 1qf1 in the "Data0" folder, there are also 100 docked decoy poses in
+  the "1qf1_decoys.mol2" file and their corresponding RMSDs to the native pose
+  are recorded in the "1qf1_rmsd.dat" file. All these files are from the
+  CASF2016 docking decoy set (http://www.pdbbind-cn.org/casf.php).
+
+1.Run "bash Step1_SplitLigand.sh" will split the decoy poses in the decoys.mol2
+  file into single pose Mol2 files and place them into the corresponding folders
+  named with their pose names, while the native binding pose Mol2 file will be
+  placed into the "1qf1_ligand" folder. The RMSD of each pose will be picked
+  from the "1qf1_rmsd.dat" file and record into the "Lig_RMSD.dat" files.
+
+2.Edit the "Step2_GetPDBQT2PDB.sh" file to set the path of AutoDockTools. The
+  python scripts in the AutoDockTools should be run with the "pythonsh" program
+  provided by the MGLTools package. Then, run this shell script to prepare the
+  receptor PDB file and each ligand Mol2 file into the PDB format (named
+  Rec_noNH.pdb and Lig_noNH.pdb, respectively) by removing all waters, lone
+  pairs and nonpolar hydrogens. The calculations will take about 30s to finish.
+
+3.Run "Step3_CalElementVoxel.sh" to calculate the voxel descriptors for each
+  complex based on their prepared PDB files. The voxel data will be stored into
+  the "Descriptor.dat.nc" file. You will need to edit this script when you
+  perform calculations on your own systems. The calculations in this example
+  will take about 60s to finish.
+
+4.Run "Step4_GetComplexList.sh" to get a list file (named ComplexList.dat) with
+  pose names in the first column and the full path of their descriptor files in
+  the second column. Columns are split with spaces, so please MAKE SURE THERE
+  ARE NO SPACES IN THE POSE NAMES AND DESCRIPTOR FILE PATHS.
+
+5.Edit the "Step5_CalPoseRMSD.sh" file. If you want to perform all calculations
+  only with CPUs, change "DeepBSP_GPU.py" to "DeepBSP_CPU.py". The default
+  bench size is set to 32 and the default bench number of workers and maximum
+  number of threads are both set to 2. The calculation will need about 1.0GB of
+  video memory and about 3.0GB of physical memory. You may want to change these
+  settings based on your hardware. Please note that since the number of poses in
+  this example is relatively small, using more number of workers or more CPU
+  threads may not speed up the calculation, when you perform calculations on GPU.
+
+6.Active your conda torch environment and then run Step5_CalPoseRMSD.sh. The
+  calculation will need about 75s to finish on a laptop with i7-9750H and RTX
+  2060. The calculated RMSDs will be stored into the "PoseRMSD.dat" file. You
+  can compare the results with the "PoseRMSD.backup.dat" file, which was
+  calculated by the developer. You can also compare these calculated RMSDs with
+  their real RMSDs recorded in the "1qf1_rmsd.dat" file, the Pearson linear
+  correlation coefficient between them is about 0.84.
+
+7.The "Step0_Clean.sh" script can be used to clean all folders and files created
+  in the "CASF2016_Docking_1qf1" folder among all the above steps.
+--------------------------------------------------------------------------------
