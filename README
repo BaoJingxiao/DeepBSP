@@ -2,10 +2,14 @@ DeepBSP v0.1 (by Bao Jingxiao 2021.3)
 
 Introduction--------------------------------------------------------------------
 DeepBSP is a machine-learning-based 3D-CNN model that can directly predict the
-RMSD of ligand docking poses to its native binding model. The element-based
+RMSD of ligand docking pose to its native binding model. The element-based
 voxel grids are used to descript the complex structures. DeepBSP is developed
 based on ligand poses docked with Autodock Vina, but has RMSD predict ability on
-poses docked with other docking software.
+poses docked with other docking software. The source code and the parameters of
+the model and the element voxel calculator are provided here. While the native
+complexes and the Autodock Vina docked ligand poses, as well as their RMSDs with
+reference to their corresponding natives used in the development of our model
+are available at https://doi.org/10.5281/zenodo.4610159.
 --------------------------------------------------------------------------------
 
 Make and Install----------------------------------------------------------------
@@ -15,11 +19,11 @@ Make and Install----------------------------------------------------------------
   descriptor calculator is written in Fortran and need to be compiled through a
   compiler (GNU fortran compiler version 6.4.0). The calculated descriptors are
   stored in the compression enabled NetCDF format, so the corresponding library
-  files are required to build the descriptor calculator. The 3D-CNN model was
+  files are required to build the descriptor calculator. The 3D-CNN model is
   built with Pytorch (version 1.4.0, installed var conda version 4.8.3) and
-  require the netcdf4 python package (version 1.5.3). Programs and packages with
-  versions other than those in the brackets may work as well, but have not been
-  tested.
+  requires the netcdf4 python package (version 1.5.3). Programs and packages
+  with versions other than those in the brackets may work as well, but have not
+  been tested.
 
 1.Packages required to build the netcdf library files are provided in the
   "packages" folder, the installation processes are listed in the "RunMake.sh"
@@ -28,10 +32,10 @@ Make and Install----------------------------------------------------------------
   to the manual of the corresponding program.
 
 2.The source code of the voxel descriptor calculator is in the "src" folder.
-  You can run "bash Make.sh" to build the program if you have installed the
-  required library files successfully in the above step. If you use compiler
-  other than GNU, or if you already have the suitable netcdf libs installed
-  somewhere, you can edit the Make.sh file by yourself. The built program, named
+  You can run "bash Make.sh" to build the program after successfully installed
+  the required library files in the above step. If you use compiler other than
+  GNU or the suitable netcdf libs have already been installed somewhere, you can
+  edit the Make.sh file by yourself. The built program, named
   Cal_ElementVoxel_PDB, will be placed in the "bin" folder under the same
   directory as the "src" folder.
 
@@ -40,7 +44,7 @@ Make and Install----------------------------------------------------------------
   will use GPU to accelerate the calculation. Since the amount of calculation of
   3D-CNN model is large, we recommend you to use GPU acceleration when possible.
   The element VDW radii parameters required by the voxel descriptor calculator
-  is recorded in the "Cal_ElementVoxel_PDB_ElementVDWRadii.dat" file in the
+  is recorded in the "Cal_ElementVoxel_PDB_ElementVDWRadii.dat" file under the
   "dat" folder, the network model parameter files are also placed in this folder.
 --------------------------------------------------------------------------------
 
@@ -57,7 +61,7 @@ Brief Example-------------------------------------------------------------------
   file into single pose Mol2 files and place them into the corresponding folders
   named with their pose names, while the native binding pose Mol2 file will be
   placed into the "1qf1_ligand" folder. The RMSD of each pose will be picked
-  from the "1qf1_rmsd.dat" file and record into the "Lig_RMSD.dat" files.
+  from the "1qf1_rmsd.dat" file and record into those "Lig_RMSD.dat" files.
 
 2.Edit the "Step2_GetPDBQT2PDB.sh" file to set the path of AutoDockTools. The
   python scripts in the AutoDockTools should be run with the "pythonsh" program
@@ -75,13 +79,13 @@ Brief Example-------------------------------------------------------------------
 4.Run "Step4_GetComplexList.sh" to get a list file (named ComplexList.dat) with
   pose names in the first column and the full path of their descriptor files in
   the second column. Columns are split with spaces, so please MAKE SURE THERE
-  ARE NO SPACES IN THE POSE NAMES AND DESCRIPTOR FILE PATHS.
+  ARE NO SPACES IN THE POSE NAMES AND THE DESCRIPTOR FILE PATHS.
 
 5.Edit the "Step5_CalPoseRMSD.sh" file. If you want to perform all calculations
   only with CPUs, change "DeepBSP_GPU.py" to "DeepBSP_CPU.py". The default
   bench size is set to 32 and the default bench number of workers and maximum
   number of threads are both set to 2. The calculation will need about 1.0GB of
-  video memory and about 3.0GB of physical memory. You may want to change these
+  video memory and about 3.0GB of physical memory. You can change these
   settings based on your hardware. Please note that since the number of poses in
   this example is relatively small, using more number of workers or more CPU
   threads may not speed up the calculation, when you perform calculations on GPU.
@@ -91,7 +95,7 @@ Brief Example-------------------------------------------------------------------
   2060. The calculated RMSDs will be stored into the "PoseRMSD.dat" file. You
   can compare the results with the "PoseRMSD.backup.dat" file, which was
   calculated by the developer. You can also compare these calculated RMSDs with
-  their real RMSDs recorded in the "1qf1_rmsd.dat" file, the Pearson linear
+  their actual RMSDs recorded in the "1qf1_rmsd.dat" file, the Pearson linear
   correlation coefficient between them is about 0.84.
 
 7.The "Step0_Clean.sh" script can be used to clean all folders and files created
